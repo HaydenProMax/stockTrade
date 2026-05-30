@@ -37,9 +37,13 @@ def render_message(
     lines.append("")
     lines.append("基金建议：")
     for allocation in allocations:
+        display_name = (
+            allocation.fund_name
+            if allocation.fund_code == "ASSET_GROUP"
+            else f"{allocation.fund_name}（{allocation.fund_code}）"
+        )
         lines.append(
-            f"- {allocation.fund_name} {allocation.fund_code}: {allocation.units:g}U "
-            f"({allocation.status})"
+            f"- {display_name}: {allocation.units:g}U ({allocation.status})；{allocation.reason}"
         )
     if warnings:
         lines.append("")

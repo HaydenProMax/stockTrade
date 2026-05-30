@@ -10,15 +10,28 @@ def allocate_to_funds(asset_config: dict, signal: AssetSignal) -> list[FundAlloc
 
     ratios = [fund.get("allocation_ratio") for fund in funds]
     if any(ratio is None for ratio in ratios):
+        if len(funds) == 1:
+            fund = funds[0]
+            return [
+                FundAllocation(
+                    asset_group=signal.asset_group,
+                    fund_code=fund["code"],
+                    fund_name=fund["name"],
+                    units=signal.final_units,
+                    status="suggested",
+                    reason="资产组内仅启用一只基金",
+                )
+            ]
         return [
             FundAllocation(
                 asset_group=signal.asset_group,
-                fund_code="ASSET_GROUP",
-                fund_name=asset_config["name"],
-                units=signal.final_units,
-                status="group_only",
-                reason="fund allocation ratios are not configured",
+                fund_code=fund["code"],
+                fund_name=fund["name"],
+                units=0,
+                status="ratio_unconfigured",
+                reason=f"资产组建议 {signal.final_units:g}U；组内分配比例未配置，暂不拆分",
             )
+            for fund in funds
         ]
 
     total_ratio = sum(float(ratio) for ratio in ratios)
