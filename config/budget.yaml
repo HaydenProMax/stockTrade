@@ -1,0 +1,14 @@
+unit_amount: null
+portfolio_monthly_max_units: 12
+tech_growth_monthly_max_units: 7
+asset_group_daily_max_units: 2
+
+asset_group_monthly_max_units:
+  nasdaq100: 4
+  sp500: 3
+  csi_a500: 3
+  csi300: 3
+  dividend_low_vol_50: 2
+  hstech: 4
+  global_tech: 3
+  nikkei225: 3

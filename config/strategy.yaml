@@ -1,0 +1,54 @@
+drawdown_window_days: 250
+moving_average_days: [60, 120, 250]
+
+volatility_classes:
+  low:
+    bands:
+      - max_drawdown: -0.05
+        units: 0
+      - max_drawdown: -0.10
+        units: 1
+      - max_drawdown: -0.15
+        units: 2
+      - max_drawdown: null
+        units: 3
+  medium:
+    bands:
+      - max_drawdown: -0.07
+        units: 0
+      - max_drawdown: -0.12
+        units: 1
+      - max_drawdown: -0.18
+        units: 2
+      - max_drawdown: null
+        units: 3
+  high:
+    bands:
+      - max_drawdown: -0.10
+        units: 0
+      - max_drawdown: -0.15
+        units: 1
+      - max_drawdown: -0.25
+        units: 2
+      - max_drawdown: null
+        units: 3
+
+trend_filter:
+  above_ma_60_multiplier: 0
+  below_ma_60_above_ma_120_multiplier: 0.5
+  below_ma_120_multiplier: 1
+
+active_qdii:
+  fund_nav_drawdown_confirm: -0.08
+  max_daily_units: 1
+  max_monthly_units: 3
+  proxy_bands:
+    - max_drawdown: -0.10
+      units: 0
+    - max_drawdown: -0.15
+      units: 0
+      observe: true
+    - max_drawdown: -0.25
+      units: 1
+    - max_drawdown: null
+      units: 2

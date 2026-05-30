@@ -1,0 +1,33 @@
+[project]
+name = "fund-signal"
+version = "0.1.0"
+description = "Daily drawdown-based fund add-on signal notifier"
+requires-python = ">=3.10"
+dependencies = [
+  "akshare>=1.16.0",
+  "pandas>=2.2.0",
+  "python-dotenv>=1.0.0",
+  "PyYAML>=6.0.0",
+  "requests>=2.31.0",
+  "yfinance>=0.2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0.0",
+  "ruff>=0.6.0",
+]
+
+[project.scripts]
+fund-signal = "fund_signal.cli:main"
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

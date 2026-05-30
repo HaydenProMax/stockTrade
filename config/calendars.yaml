@@ -1,0 +1,11 @@
+timezone: Asia/Shanghai
+push_windows:
+  noon:
+    start: "11:30"
+    end: "11:40"
+  afternoon:
+    start: "14:30"
+    end: "14:45"
+
+manual_holidays: []
+manual_workdays: []

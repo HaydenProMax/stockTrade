@@ -1,0 +1,134 @@
+asset_groups:
+  nasdaq100:
+    name: 纳指100
+    volatility_class: high
+    market: us
+    index_symbol: "^NDX"
+    provider: yfinance
+    tech_growth: true
+    qdii: true
+    funds:
+      - code: "270042"
+        name: 广发纳斯达克100
+        enabled: true
+        allocation_ratio: null
+      - code: "040046"
+        name: 华夏纳斯达克100
+        enabled: true
+        allocation_ratio: null
+      - code: "019547"
+        name: 纳指100基金
+        enabled: true
+        allocation_ratio: null
+
+  sp500:
+    name: 标普500
+    volatility_class: medium
+    market: us
+    index_symbol: "^GSPC"
+    provider: yfinance
+    tech_growth: false
+    qdii: true
+    funds:
+      - code: "017641"
+        name: 摩根标普500
+        enabled: true
+        allocation_ratio: null
+
+  nikkei225:
+    name: 日经225
+    volatility_class: medium
+    market: japan
+    index_symbol: "^N225"
+    provider: yfinance
+    tech_growth: false
+    qdii: true
+    funds:
+      - code: "020712"
+        name: 日经225基金
+        enabled: true
+        allocation_ratio: null
+      - code: "020713"
+        name: 日经225基金
+        enabled: true
+        allocation_ratio: null
+
+  hstech:
+    name: 恒生科技
+    volatility_class: high
+    market: hk
+    index_symbol: "^HSTECH"
+    provider: yfinance
+    tech_growth: true
+    qdii: false
+    funds:
+      - code: "012348"
+        name: 恒生科技基金
+        enabled: true
+        allocation_ratio: null
+
+  csi300:
+    name: 沪深300
+    volatility_class: low
+    market: cn
+    index_symbol: "000300"
+    provider: akshare
+    tech_growth: false
+    qdii: false
+    index_enhanced: true
+    funds:
+      - code: "004789"
+        name: 沪深300指数增强
+        enabled: true
+        allocation_ratio: null
+
+  csi_a500:
+    name: 中证A500
+    volatility_class: medium
+    market: cn
+    index_symbol: "000510"
+    provider: akshare
+    tech_growth: false
+    qdii: false
+    funds:
+      - code: "022459"
+        name: 中证A500基金
+        enabled: true
+        allocation_ratio: null
+
+  dividend_low_vol_50:
+    name: 红利低波50
+    volatility_class: low
+    market: cn
+    index_symbol: "515450"
+    provider: akshare
+    proxy: true
+    tech_growth: false
+    qdii: false
+    funds:
+      - code: "008163"
+        name: 红利低波50基金
+        enabled: true
+        allocation_ratio: null
+
+  global_tech:
+    name: 全球科技互联
+    volatility_class: high
+    market: global
+    provider: proxy
+    tech_growth: true
+    qdii: true
+    active_fund: true
+    proxy_weights:
+      nasdaq100: 0.5
+      hstech: 0.3
+      cash: 0.2
+    funds:
+      - code: "006373"
+        name: 国富全球科技互联混合
+        enabled: true
+        allocation_ratio: null
+      - code: "021842"
+        name: 国富全球科技互联混合
+        enabled: true
+        allocation_ratio: null
