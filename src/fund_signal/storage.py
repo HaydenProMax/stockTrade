@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import sqlite3
+from datetime import datetime
 from pathlib import Path
+
+from fund_signal.types import AssetSignal, FundAllocation
 
 
 SCHEMA = """
@@ -79,3 +82,87 @@ class Storage:
     def init_schema(self) -> None:
         with self.connect() as connection:
             connection.executescript(SCHEMA)
+            self._ensure_column(connection, "signals", "source", "TEXT NOT NULL DEFAULT ''")
+
+    def start_run(self, run_date: str, mode: str) -> int:
+        with self.connect() as connection:
+            cursor = connection.execute(
+                """
+                INSERT INTO runs (run_date, mode, started_at, status)
+                VALUES (?, ?, ?, ?)
+                """,
+                (run_date, mode, _now_text(), "running"),
+            )
+            return int(cursor.lastrowid)
+
+    def finish_run(self, run_id: int, status: str, error_message: str | None = None) -> None:
+        with self.connect() as connection:
+            connection.execute(
+                """
+                UPDATE runs
+                SET finished_at = ?, status = ?, error_message = ?
+                WHERE id = ?
+                """,
+                (_now_text(), status, error_message, run_id),
+            )
+
+    def save_signals(self, run_date: str, mode: str, signals: list[AssetSignal]) -> None:
+        with self.connect() as connection:
+            connection.executemany(
+                """
+                INSERT INTO signals (
+                    run_date, mode, asset_group, source, drawdown,
+                    raw_units, final_units, trend_state, reason
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                [
+                    (
+                        run_date,
+                        mode,
+                        signal.asset_group,
+                        signal.source,
+                        signal.drawdown,
+                        signal.raw_units,
+                        signal.final_units,
+                        signal.trend_state,
+                        signal.reason,
+                    )
+                    for signal in signals
+                ],
+            )
+
+    def save_allocations(self, run_date: str, mode: str, allocations: list[FundAllocation]) -> None:
+        with self.connect() as connection:
+            connection.executemany(
+                """
+                INSERT INTO allocations (
+                    run_date, mode, asset_group, fund_code, fund_name,
+                    units, status, reason
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                [
+                    (
+                        run_date,
+                        mode,
+                        allocation.asset_group,
+                        allocation.fund_code,
+                        allocation.fund_name,
+                        allocation.units,
+                        allocation.status,
+                        allocation.reason,
+                    )
+                    for allocation in allocations
+                ],
+            )
+
+    @staticmethod
+    def _ensure_column(connection: sqlite3.Connection, table: str, column: str, definition: str) -> None:
+        columns = [row[1] for row in connection.execute(f"PRAGMA table_info({table})")]
+        if column not in columns:
+            connection.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
+
+
+def _now_text() -> str:
+    return datetime.now().isoformat(timespec="seconds")
