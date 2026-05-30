@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from statistics import mean
 
 from fund_signal.types import AssetSignal, PriceBar
@@ -11,10 +12,7 @@ def calculate_signal(asset_group: str, asset_config: dict, strategy_config: dict
         raise ValueError(f"{asset_group} requires at least {window} bars, got {len(bars)}")
 
     latest = bars[-1]
-    recent = bars[-window:]
-    high = max(bar.high or bar.close for bar in recent)
-    drawdown = latest.close / high - 1
-
+    drawdown = calculate_drawdown(bars, window)
     raw_units = _units_for_drawdown(
         drawdown,
         strategy_config["volatility_classes"][asset_config["volatility_class"]]["bands"],
@@ -31,6 +29,37 @@ def calculate_signal(asset_group: str, asset_config: dict, strategy_config: dict
         final_units=final_units,
         trend_state=trend_state,
         reason=f"drawdown={drawdown:.2%}, raw_units={raw_units}, multiplier={multiplier}",
+    )
+
+
+def calculate_drawdown(bars: list[PriceBar], window: int) -> float:
+    if len(bars) < window:
+        raise ValueError(f"Requires at least {window} bars, got {len(bars)}")
+    latest = bars[-1]
+    recent = bars[-window:]
+    high = max(bar.high or bar.close for bar in recent)
+    return latest.close / high - 1
+
+
+def apply_active_qdii_confirmation(
+    signal: AssetSignal,
+    fund_nav_drawdown: float,
+    confirm_threshold: float,
+) -> AssetSignal:
+    if signal.final_units <= 0:
+        return replace(signal, reason=f"{signal.reason}; fund_nav_drawdown={fund_nav_drawdown:.2%}")
+    if fund_nav_drawdown <= confirm_threshold:
+        return replace(
+            signal,
+            reason=f"{signal.reason}; fund_nav_drawdown={fund_nav_drawdown:.2%}, confirmed",
+        )
+    return replace(
+        signal,
+        final_units=0,
+        reason=(
+            f"{signal.reason}; fund_nav_drawdown={fund_nav_drawdown:.2%}, "
+            f"not confirmed by threshold {confirm_threshold:.2%}"
+        ),
     )
 
 

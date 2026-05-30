@@ -38,6 +38,30 @@ class AkshareProvider(MarketDataProvider):
 
         return ak.fund_purchase_em()
 
+    def fund_nav_history(self, symbol: str, period: str = "成立来") -> list[PriceBar]:
+        import akshare as ak
+
+        data = ak.fund_open_fund_info_em(symbol=symbol, indicator="单位净值走势", period=period)
+        if data is None or data.empty:
+            return []
+
+        bars: list[PriceBar] = []
+        for _, row in data.iterrows():
+            nav_date = _date_value(row["净值日期"])
+            nav = float(row["单位净值"])
+            bars.append(
+                PriceBar(
+                    date=nav_date,
+                    open=nav,
+                    high=nav,
+                    low=nav,
+                    close=nav,
+                    volume=None,
+                    source="akshare:fund_open_fund_info_em",
+                )
+            )
+        return bars
+
 
 def _history_candidates(ak: Any, symbol: str, start_text: str, end_text: str) -> list[tuple[str, Callable[[], Any]]]:
     prefixed_symbol = _with_market_prefix(symbol)
