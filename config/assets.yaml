@@ -3,8 +3,9 @@ asset_groups:
     name: 纳指100
     volatility_class: high
     market: us
-    index_symbol: "^NDX"
+    index_symbol: "QQQ"
     provider: yfinance
+    provider_fallback: [alphavantage, csv]
     tech_growth: true
     qdii: true
     funds:
@@ -25,8 +26,9 @@ asset_groups:
     name: 标普500
     volatility_class: medium
     market: us
-    index_symbol: "^GSPC"
+    index_symbol: "SPY"
     provider: yfinance
+    provider_fallback: [alphavantage, csv]
     tech_growth: false
     qdii: true
     funds:
@@ -39,8 +41,9 @@ asset_groups:
     name: 日经225
     volatility_class: medium
     market: japan
-    index_symbol: "^N225"
+    index_symbol: "1321.T"
     provider: yfinance
+    provider_fallback: [csv]
     tech_growth: false
     qdii: true
     funds:
@@ -57,8 +60,9 @@ asset_groups:
     name: 恒生科技
     volatility_class: high
     market: hk
-    index_symbol: "^HSTECH"
-    provider: yfinance
+    index_symbol: "HSTECH"
+    provider: akshare
+    provider_fallback: [csv]
     tech_growth: true
     qdii: false
     funds:
@@ -73,6 +77,7 @@ asset_groups:
     market: cn
     index_symbol: "000300"
     provider: akshare
+    provider_fallback: [csv]
     tech_growth: false
     qdii: false
     index_enhanced: true
@@ -88,6 +93,7 @@ asset_groups:
     market: cn
     index_symbol: "000510"
     provider: akshare
+    provider_fallback: [csv]
     tech_growth: false
     qdii: false
     funds:
@@ -102,6 +108,7 @@ asset_groups:
     market: cn
     index_symbol: "515450"
     provider: akshare
+    provider_fallback: [csv]
     proxy: true
     tech_growth: false
     qdii: false

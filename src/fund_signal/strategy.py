@@ -25,6 +25,7 @@ def calculate_signal(asset_group: str, asset_config: dict, strategy_config: dict
     return AssetSignal(
         asset_group=asset_group,
         name=asset_config["name"],
+        source=latest.source,
         drawdown=drawdown,
         raw_units=raw_units,
         final_units=final_units,

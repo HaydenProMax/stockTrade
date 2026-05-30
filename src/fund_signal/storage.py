@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS signals (
     run_date TEXT NOT NULL,
     mode TEXT NOT NULL,
     asset_group TEXT NOT NULL,
+    source TEXT NOT NULL DEFAULT '',
     drawdown REAL NOT NULL,
     raw_units REAL NOT NULL,
     final_units REAL NOT NULL,

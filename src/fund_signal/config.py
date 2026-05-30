@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from dotenv import load_dotenv
 import yaml
 
 
@@ -26,6 +27,7 @@ def load_yaml(path: Path) -> dict[str, Any]:
 
 def load_config(root: Path | None = None) -> AppConfig:
     project_root = root or Path.cwd()
+    load_dotenv(project_root / ".env")
     config_dir = project_root / "config"
     return AppConfig(
         root=project_root,

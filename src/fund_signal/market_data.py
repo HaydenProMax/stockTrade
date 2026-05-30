@@ -4,6 +4,7 @@ from datetime import date
 from pathlib import Path
 
 from fund_signal.providers.akshare_provider import AkshareProvider
+from fund_signal.providers.alphavantage_provider import AlphaVantageProvider
 from fund_signal.providers.csv_provider import CsvProvider
 from fund_signal.providers.yfinance_provider import YFinanceProvider
 from fund_signal.types import PriceBar
@@ -12,7 +13,8 @@ from fund_signal.types import PriceBar
 class MarketData:
     def __init__(self, cache_dir: Path):
         self.providers = {
-            "yfinance": YFinanceProvider(),
+            "alphavantage": AlphaVantageProvider(),
+            "yfinance": YFinanceProvider(cache_dir),
             "akshare": AkshareProvider(),
             "csv": CsvProvider(cache_dir),
         }

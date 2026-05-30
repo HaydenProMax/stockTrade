@@ -18,3 +18,16 @@ python -m fund_signal run --mode afternoon
 python -m fund_signal check
 ```
 
+## 数据源配置
+
+默认数据源：
+
+- 海外 ETF/指数代理：Yahoo chart / yfinance
+- A 股指数、ETF、港股指数：AKShare
+- 离线兜底：CSV cache
+
+Alpha Vantage 作为可选备用源，需要在 `.env` 中配置：
+
+```dotenv
+ALPHAVANTAGE_API_KEY=your_api_key
+```

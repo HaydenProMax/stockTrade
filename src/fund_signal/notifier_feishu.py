@@ -9,6 +9,7 @@ from fund_signal.types import FundAllocation, AssetSignal
 def signal_hash(signal: AssetSignal, allocations: list[FundAllocation]) -> str:
     payload = {
         "asset_group": signal.asset_group,
+        "source": signal.source,
         "drawdown": round(signal.drawdown, 6),
         "raw_units": signal.raw_units,
         "final_units": signal.final_units,
@@ -30,7 +31,8 @@ def render_message(
     for signal in signals:
         lines.append(
             f"- {signal.name}: 回撤 {signal.drawdown:.2%}, "
-            f"触发 {signal.raw_units:g}U, 建议 {signal.final_units:g}U, {signal.trend_state}"
+            f"触发 {signal.raw_units:g}U, 建议 {signal.final_units:g}U, "
+            f"{signal.trend_state}, 来源 {signal.source}"
         )
     lines.append("")
     lines.append("基金建议：")

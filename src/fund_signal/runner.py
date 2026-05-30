@@ -32,7 +32,12 @@ def run(config: AppConfig, mode: str, send: bool = False) -> str:
         if provider == "proxy":
             continue
         try:
-            bars = market_data.history(asset_config["index_symbol"], provider, start=start)
+            bars = market_data.history(
+                asset_config["index_symbol"],
+                provider,
+                start=start,
+                fallback=tuple(asset_config.get("provider_fallback", ["csv"])),
+            )
         except Exception as exc:  # noqa: BLE001 - keep one provider failure from stopping all signals
             warnings.append(f"{asset_config['name']}({asset_config['index_symbol']}): {exc}")
             continue

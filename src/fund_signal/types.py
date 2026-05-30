@@ -19,6 +19,7 @@ class PriceBar:
 class AssetSignal:
     asset_group: str
     name: str
+    source: str
     drawdown: float
     raw_units: float
     final_units: float
