@@ -31,3 +31,10 @@ Alpha Vantage 作为可选备用源，需要在 `.env` 中配置：
 ```dotenv
 ALPHAVANTAGE_API_KEY=your_api_key
 ```
+
+飞书推送需要配置：
+
+```dotenv
+FEISHU_WEBHOOK_URL=https://open.feishu.cn/open-apis/bot/v2/hook/...
+FEISHU_WEBHOOK_SECRET=optional_signing_secret
+```

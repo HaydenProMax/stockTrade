@@ -157,6 +157,54 @@ class Storage:
                 ],
             )
 
+    def notification_sent(self, run_date: str, mode: str, asset_group: str, signal_hash: str) -> bool:
+        with self.connect() as connection:
+            row = connection.execute(
+                """
+                SELECT 1
+                FROM notifications
+                WHERE run_date = ?
+                  AND mode = ?
+                  AND asset_group = ?
+                  AND signal_hash = ?
+                  AND status = 'success'
+                LIMIT 1
+                """,
+                (run_date, mode, asset_group, signal_hash),
+            ).fetchone()
+        return row is not None
+
+    def save_notification(
+        self,
+        run_date: str,
+        mode: str,
+        asset_group: str,
+        signal_hash: str,
+        status: str,
+        response_code: int | None = None,
+        response_body: str | None = None,
+    ) -> None:
+        with self.connect() as connection:
+            connection.execute(
+                """
+                INSERT OR REPLACE INTO notifications (
+                    run_date, mode, asset_group, signal_hash,
+                    notified_at, status, response_code, response_body
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    run_date,
+                    mode,
+                    asset_group,
+                    signal_hash,
+                    _now_text(),
+                    status,
+                    response_code,
+                    response_body,
+                ),
+            )
+
     @staticmethod
     def _ensure_column(connection: sqlite3.Connection, table: str, column: str, definition: str) -> None:
         columns = [row[1] for row in connection.execute(f"PRAGMA table_info({table})")]

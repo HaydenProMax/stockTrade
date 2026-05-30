@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import hashlib
+import base64
+import hmac
 import json
+import time
 
 from fund_signal.types import FundAllocation, AssetSignal
 
@@ -53,7 +56,18 @@ def render_message(
     return "\n".join(lines)
 
 
-def send_text(webhook_url: str, text: str):
+def send_text(webhook_url: str, text: str, secret: str | None = None):
     import requests
 
-    return requests.post(webhook_url, json={"msg_type": "text", "content": {"text": text}}, timeout=10)
+    payload = {"msg_type": "text", "content": {"text": text}}
+    if secret:
+        timestamp = str(int(time.time()))
+        payload["timestamp"] = timestamp
+        payload["sign"] = _feishu_sign(timestamp, secret)
+    return requests.post(webhook_url, json=payload, timeout=10)
+
+
+def _feishu_sign(timestamp: str, secret: str) -> str:
+    string_to_sign = f"{timestamp}\n{secret}".encode("utf-8")
+    digest = hmac.new(string_to_sign, b"", digestmod=hashlib.sha256).digest()
+    return base64.b64encode(digest).decode("utf-8")

@@ -7,7 +7,7 @@ from fund_signal.calendar import should_run_today
 from fund_signal.config import AppConfig
 from fund_signal.fund_rules import apply_purchase_rules
 from fund_signal.market_data import MarketData
-from fund_signal.notifier_feishu import render_message
+from fund_signal.notifier_feishu import render_message, send_text, signal_hash
 from fund_signal.providers.akshare_provider import AkshareProvider
 from fund_signal.strategy import (
     apply_active_qdii_confirmation,
@@ -82,7 +82,7 @@ def run(config: AppConfig, mode: str, send: bool = False) -> str:
         storage.save_allocations(run_date, mode, allocations)
         message = render_message(mode, signals, allocations, warnings)
         if send:
-            raise NotImplementedError("Feishu send will be enabled after webhook configuration is provided.")
+            message = _send_feishu_if_needed(storage, run_date, mode, signals, allocations, message)
         storage.finish_run(run_id, "success")
         return message
     except Exception as exc:
@@ -138,3 +138,46 @@ def _active_fund_nav_history(asset_config: dict) -> list[PriceBar]:
     if not enabled_funds:
         raise ValueError("active fund has no enabled funds")
     return AkshareProvider().fund_nav_history(enabled_funds[0]["code"])
+
+
+def _send_feishu_if_needed(
+    storage: Storage,
+    run_date: str,
+    mode: str,
+    signals: list[AssetSignal],
+    allocations: list[FundAllocation],
+    message: str,
+) -> str:
+    import os
+
+    webhook_url = os.getenv("FEISHU_WEBHOOK_URL")
+    if not webhook_url:
+        raise RuntimeError("Missing FEISHU_WEBHOOK_URL in environment or .env")
+    webhook_secret = os.getenv("FEISHU_WEBHOOK_SECRET") or None
+
+    pending: list[tuple[AssetSignal, str]] = []
+    for signal in signals:
+        signal_allocations = [
+            allocation for allocation in allocations if allocation.asset_group == signal.asset_group
+        ]
+        digest = signal_hash(signal, signal_allocations)
+        if not storage.notification_sent(run_date, mode, signal.asset_group, digest):
+            pending.append((signal, digest))
+
+    if not pending:
+        return "Skip Feishu notification: same signals already sent.\n\n" + message
+
+    response = send_text(webhook_url, message, webhook_secret)
+    status = "success" if response.ok else "failed"
+    for signal, digest in pending:
+        storage.save_notification(
+            run_date=run_date,
+            mode=mode,
+            asset_group=signal.asset_group,
+            signal_hash=digest,
+            status=status,
+            response_code=response.status_code,
+            response_body=response.text[:1000],
+        )
+    response.raise_for_status()
+    return "Sent Feishu notification.\n\n" + message
