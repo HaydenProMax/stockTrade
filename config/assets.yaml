@@ -8,19 +8,38 @@ asset_groups:
     provider_fallback: [alphavantage, csv]
     tech_growth: true
     qdii: true
+    strategy_plan:
+      monthly_budget_amount: 400
+      unit_amount: 100
+      month_end_fill: true
+      fill_last_trading_days: 5
     funds:
-      - code: "270042"
-        name: 广发纳斯达克100
-        enabled: true
-        allocation_ratio: null
       - code: "040046"
-        name: 华夏纳斯达克100
+        name: 华安纳斯达克100A
         enabled: true
-        allocation_ratio: null
-      - code: "019547"
-        name: 纳指100基金
+        plans:
+          - type: fixed_daily
+            amount: 10
+            monthly_budget_amount: 260
+      - code: "014978"
+        name: 华安纳斯达克100C
         enabled: true
-        allocation_ratio: null
+        plans:
+          - type: fixed_daily
+            amount: 10
+            monthly_budget_amount: 260
+      - code: "270042"
+        name: 广发纳斯达克100A
+        enabled: true
+        plans:
+          - type: fixed_daily
+            amount: 10
+            monthly_budget_amount: 260
+      - code: "021778"
+        name: 广发纳斯达克100F
+        enabled: true
+        strategy_enabled: true
+        strategy_priority: 1
 
   sp500:
     name: 标普500
@@ -35,7 +54,6 @@ asset_groups:
       - code: "017641"
         name: 摩根标普500
         enabled: true
-        allocation_ratio: null
 
   nikkei225:
     name: 日经225
@@ -48,13 +66,19 @@ asset_groups:
     qdii: true
     funds:
       - code: "020712"
-        name: 日经225基金
+        name: 日经225基金020712
         enabled: true
-        allocation_ratio: null
+        plans:
+          - type: fixed_daily
+            amount: 10
+            monthly_budget_amount: 260
       - code: "020713"
-        name: 日经225基金
+        name: 日经225基金020713
         enabled: true
-        allocation_ratio: null
+        plans:
+          - type: fixed_daily
+            amount: 10
+            monthly_budget_amount: 260
 
   hstech:
     name: 恒生科技
@@ -65,11 +89,15 @@ asset_groups:
     provider_fallback: [csv]
     tech_growth: true
     qdii: false
+    strategy_plan:
+      monthly_budget_amount: 500
+      unit_amount: 100
     funds:
       - code: "012348"
         name: 恒生科技基金
         enabled: true
-        allocation_ratio: null
+        strategy_enabled: true
+        strategy_priority: 1
 
   csi300:
     name: 沪深300
@@ -85,7 +113,6 @@ asset_groups:
       - code: "004789"
         name: 沪深300指数增强
         enabled: true
-        allocation_ratio: null
 
   csi_a500:
     name: 中证A500
@@ -96,11 +123,15 @@ asset_groups:
     provider_fallback: [csv]
     tech_growth: false
     qdii: false
+    strategy_plan:
+      monthly_budget_amount: 500
+      unit_amount: 100
     funds:
       - code: "022459"
         name: 中证A500基金
         enabled: true
-        allocation_ratio: null
+        strategy_enabled: true
+        strategy_priority: 1
 
   dividend_low_vol_50:
     name: 红利低波50
@@ -112,11 +143,19 @@ asset_groups:
     proxy: true
     tech_growth: false
     qdii: false
+    strategy_plan:
+      monthly_budget_amount: 1000
+      unit_amount: 250
     funds:
       - code: "008163"
         name: 红利低波50基金
         enabled: true
-        allocation_ratio: null
+        strategy_enabled: true
+        strategy_priority: 1
+        plans:
+          - type: fixed_monthly
+            amount: 1000
+            monthly_budget_amount: 1000
 
   global_tech:
     name: 全球科技互联
@@ -130,12 +169,20 @@ asset_groups:
       nasdaq100: 0.5
       hstech: 0.3
       cash: 0.2
+    strategy_plan:
+      monthly_budget_amount: 1000
+      unit_amount: 100
     funds:
       - code: "006373"
-        name: 国富全球科技互联混合
+        name: 国富全球科技互联混合A
         enabled: true
-        allocation_ratio: null
+        strategy_enabled: true
+        strategy_priority: 1
+        share_class: A
+        daily_limit_amount: 100
       - code: "021842"
-        name: 国富全球科技互联混合
+        name: 国富全球科技互联混合C
         enabled: true
-        allocation_ratio: null
+        strategy_enabled: true
+        strategy_priority: 2
+        daily_limit_amount: 100

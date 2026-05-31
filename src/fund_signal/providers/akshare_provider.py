@@ -17,13 +17,12 @@ class AkshareProvider(MarketDataProvider):
 
         start_text = start.strftime("%Y%m%d") if start else "20000101"
         end_text = end.strftime("%Y%m%d") if end else date.today().strftime("%Y%m%d")
-        candidates = _history_candidates(ak, symbol, start_text, end_text)
         errors: list[str] = []
 
-        for label, fetch in candidates:
+        for label, fetch in _history_candidates(ak, symbol, start_text, end_text):
             try:
                 data = fetch()
-            except Exception as exc:  # noqa: BLE001 - upstream data sources fail in different ways
+            except Exception as exc:  # noqa: BLE001 - upstream sources fail in different ways
                 errors.append(f"{label}: {exc}")
                 continue
             bars = _to_price_bars(data, start=start, end=end, source=f"{self.name}:{label}")
@@ -47,8 +46,8 @@ class AkshareProvider(MarketDataProvider):
 
         bars: list[PriceBar] = []
         for _, row in data.iterrows():
-            nav_date = _date_value(row["净值日期"])
-            nav = float(row["单位净值"])
+            nav_date = _date_value(_first(row, "净值日期", "date"))
+            nav = float(_first(row, "单位净值", "nav"))
             bars.append(
                 PriceBar(
                     date=nav_date,
@@ -143,11 +142,11 @@ def _to_price_bars(data: Any, start: date | None, end: date | None, source: str)
         bars.append(
             PriceBar(
                 date=bar_date,
-                open=_optional_float(_first(row, "open", "开盘")),
-                high=_optional_float(_first(row, "high", "最高")),
-                low=_optional_float(_first(row, "low", "最低")),
+                open=_optional_float(_first_optional(row, "open", "开盘")),
+                high=_optional_float(_first_optional(row, "high", "最高")),
+                low=_optional_float(_first_optional(row, "low", "最低")),
                 close=float(_first(row, "close", "收盘")),
-                volume=_optional_float(_first(row, "volume", "成交量", "amount", "成交额")),
+                volume=_optional_float(_first_optional(row, "volume", "成交量", "amount", "成交额")),
                 source=source,
             )
         )
@@ -155,16 +154,26 @@ def _to_price_bars(data: Any, start: date | None, end: date | None, source: str)
 
 
 def _first(row: Any, *columns: str) -> Any:
+    value = _first_optional(row, *columns)
+    if value is None:
+        raise KeyError(f"Missing columns {columns}; got {list(row.index)}")
+    return value
+
+
+def _first_optional(row: Any, *columns: str) -> Any:
     for column in columns:
         if column in row:
             return row[column]
-    raise KeyError(f"Missing columns {columns}; got {list(row.index)}")
+    return None
 
 
 def _date_value(value: Any) -> date:
     if hasattr(value, "date"):
         return value.date()
-    return date.fromisoformat(str(value))
+    text = str(value)
+    if len(text) == 8 and text.isdigit():
+        return date.fromisoformat(f"{text[:4]}-{text[4:6]}-{text[6:]}")
+    return date.fromisoformat(text)
 
 
 def _optional_float(value: Any) -> float | None:
@@ -173,7 +182,7 @@ def _optional_float(value: Any) -> float | None:
 
         if value is None or pd.isna(value):
             return None
-    except Exception:  # noqa: BLE001 - pandas is already present for AKShare, keep conversion defensive
+    except Exception:  # noqa: BLE001 - keep conversion defensive
         if value is None:
             return None
     return float(value)

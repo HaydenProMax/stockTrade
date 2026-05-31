@@ -1,14 +1,12 @@
-unit_amount: null
-portfolio_monthly_max_units: 12
-tech_growth_monthly_max_units: 7
-asset_group_daily_max_units: 2
+portfolio_monthly_hard_limit_amount: 5500
+assume_recommended_allocations_executed: true
 
-asset_group_monthly_max_units:
-  nasdaq100: 4
-  sp500: 3
-  csi_a500: 3
-  csi300: 3
-  dividend_low_vol_50: 2
-  hstech: 4
-  global_tech: 3
-  nikkei225: 3
+tech_growth:
+  asset_groups: [nasdaq100, hstech, global_tech]
+  monthly_observe_amount: 2500
+  monthly_warning_amount: 3000
+
+sell_rules:
+  enabled: false
+  no_sell_before_non_dividend_total_amount: 10000
+  excluded_asset_groups: [dividend_low_vol_50]

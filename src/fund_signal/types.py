@@ -20,11 +20,15 @@ class AssetSignal:
     asset_group: str
     name: str
     source: str
+    data_date: date
     drawdown: float
+    daily_change: float
     raw_units: float
     final_units: float
     trend_state: str
     reason: str
+    days_since_peak: int = 0
+    duration_multiplier: float = 1.0
 
 
 @dataclass(frozen=True)
@@ -33,5 +37,7 @@ class FundAllocation:
     fund_code: str
     fund_name: str
     units: float
+    amount: float
+    executed_amount: float | None
     status: str
     reason: str

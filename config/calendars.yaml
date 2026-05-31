@@ -1,11 +1,27 @@
 timezone: Asia/Shanghai
+source: akshare
+cache_file: china_trading_days.json
+cache_ttl_days: 30
+
 push_windows:
   noon:
-    start: "11:30"
-    end: "11:40"
+    start: "12:00"
+    end: "12:10"
   afternoon:
     start: "14:30"
     end: "14:45"
+  us_weekly:
+    start: "09:00"
+    end: "09:15"
+
+us_weekly:
+  weekday: 5
+  asset_groups: [nasdaq100, sp500, global_tech]
+  manual_run_dates: []
+
+cache_policy:
+  provider_retries: 3
+  strategy_cache_max_stale_china_trading_days: 1
 
 manual_holidays: []
 manual_workdays: []

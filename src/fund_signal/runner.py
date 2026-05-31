@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import date, timedelta
 
-from fund_signal.allocator import allocate_to_funds
-from fund_signal.calendar import should_run_today
+from fund_signal.allocator import AllocationState, allocate_to_funds
+from fund_signal.calendar import should_run_today, trading_day_lag
 from fund_signal.config import AppConfig
 from fund_signal.fund_rules import apply_purchase_rules
 from fund_signal.market_data import MarketData
@@ -18,25 +19,43 @@ from fund_signal.storage import Storage
 from fund_signal.types import AssetSignal, FundAllocation, PriceBar
 
 
-def run(config: AppConfig, mode: str, send: bool = False) -> str:
+def run(config: AppConfig, mode: str, send: bool = False, dry_run: bool = False) -> str:
     today = date.today()
-    if mode != "manual" and not should_run_today(today, config.calendars):
+    cache_dir = config.root / "data" / "cache"
+    trading_day = should_run_today(today, config.calendars, cache_dir)
+    us_weekly_day = _should_run_us_weekly(today, config.calendars)
+    if mode == "us_weekly" and not us_weekly_day and not dry_run:
+        return f"Skip: {today.isoformat()} is not a configured US weekly observation day."
+    if mode not in {"manual", "us_weekly"} and not trading_day and not dry_run:
         return f"Skip: {today.isoformat()} is not a configured trading day."
 
     storage = Storage(config.root / "data" / "fund_signal.sqlite")
     storage.init_schema()
     run_date = today.isoformat()
-    run_id = storage.start_run(run_date, mode)
+    run_id = None if dry_run else storage.start_run(run_date, mode)
 
     try:
-        market_data = MarketData(config.root / "data" / "cache")
+        if not dry_run:
+            storage.clear_run_outputs(run_date, mode)
+        market_data = MarketData(cache_dir)
+        monthly_total, monthly_asset_spent, monthly_fund_spent = storage.monthly_spending(
+            run_date[:7]
+        )
+        portfolio_limit = float(config.budget.get("portfolio_monthly_hard_limit_amount", 0) or 0)
+        portfolio_remaining = max(0.0, portfolio_limit - monthly_total) if portfolio_limit else float("inf")
+        allocation_state = AllocationState(
+            portfolio_remaining=portfolio_remaining,
+            asset_spent=monthly_asset_spent,
+            fund_spent=monthly_fund_spent,
+        )
         signals: list[AssetSignal] = []
         allocations: list[FundAllocation] = []
         warnings: list[str] = []
         histories: dict[str, list[PriceBar]] = {}
 
         start = today - timedelta(days=500)
-        for asset_group, asset_config in config.assets["asset_groups"].items():
+        selected_keys = {key for key, _ in _selected_asset_groups(config, mode)}
+        for asset_group, asset_config in _history_asset_groups(config, mode):
             provider = asset_config.get("provider")
             if provider == "proxy":
                 continue
@@ -51,11 +70,26 @@ def run(config: AppConfig, mode: str, send: bool = False) -> str:
                 warnings.append(f"{asset_config['name']}({asset_config['index_symbol']}): {exc}")
                 continue
             histories[asset_group] = bars
+            if asset_group not in selected_keys:
+                continue
             signal = calculate_signal(asset_group, asset_config, config.strategy, bars)
             signals.append(signal)
-            allocations.extend(allocate_to_funds(asset_config, signal))
+            if _cache_allows_strategy(signal, today, config.calendars, warnings, cache_dir):
+                allocations.extend(
+                    allocate_to_funds(
+                        asset_group,
+                        asset_config,
+                        signal,
+                        config.budget,
+                        allocation_state,
+                        mode=mode,
+                        today=today,
+                        calendars=config.calendars,
+                        calendar_cache_dir=cache_dir,
+                    )
+                )
 
-        for asset_group, asset_config in config.assets["asset_groups"].items():
+        for asset_group, asset_config in _selected_asset_groups(config, mode):
             if asset_config.get("provider") != "proxy":
                 continue
             try:
@@ -73,21 +107,131 @@ def run(config: AppConfig, mode: str, send: bool = False) -> str:
                         float(config.strategy["active_qdii"]["fund_nav_drawdown_confirm"]),
                     )
                 signals.append(signal)
-                allocations.extend(allocate_to_funds(asset_config, signal))
+                if _cache_allows_strategy(signal, today, config.calendars, warnings, cache_dir):
+                    allocations.extend(
+                        allocate_to_funds(
+                            asset_group,
+                            asset_config,
+                            signal,
+                            config.budget,
+                            allocation_state,
+                            mode=mode,
+                            today=today,
+                            calendars=config.calendars,
+                            calendar_cache_dir=cache_dir,
+                        )
+                    )
             except Exception as exc:  # noqa: BLE001 - proxy assets should not stop the whole run
                 warnings.append(f"{asset_config['name']}: {exc}")
 
         allocations = apply_purchase_rules(allocations)
-        storage.save_signals(run_date, mode, signals)
-        storage.save_allocations(run_date, mode, allocations)
+        if dry_run:
+            warnings.insert(0, "DRY RUN: no run, signal, allocation, or execution records were saved.")
+            if mode == "us_weekly":
+                warnings.insert(1, "US WEEKLY: observation only; no default execution or budget usage.")
+            if mode not in {"manual", "us_weekly"} and not trading_day:
+                warnings.insert(1, f"DRY RUN: {today.isoformat()} is not a configured China trading day.")
+            allocations = _mark_dry_run_allocations(allocations)
+        else:
+            storage.save_signals(run_date, mode, signals)
+            storage.save_allocations(run_date, mode, allocations)
         message = render_message(mode, signals, allocations, warnings)
         if send:
-            message = _send_feishu_if_needed(storage, run_date, mode, signals, allocations, message)
-        storage.finish_run(run_id, "success")
+            if dry_run:
+                message = _send_feishu_direct(message)
+            else:
+                message = _send_feishu_if_needed(storage, run_date, mode, signals, allocations, message)
+        if run_id is not None:
+            storage.finish_run(run_id, "success")
         return message
     except Exception as exc:
-        storage.finish_run(run_id, "failed", str(exc))
+        if run_id is not None:
+            storage.finish_run(run_id, "failed", str(exc))
         raise
+
+
+def _cache_allows_strategy(
+    signal: AssetSignal,
+    today: date,
+    calendars: dict,
+    warnings: list[str],
+    cache_dir,
+) -> bool:
+    if signal.source != "csv":
+        return True
+
+    lag = trading_day_lag(signal.data_date, today, calendars, cache_dir)
+    if lag == 0:
+        warnings.append(f"{signal.name}: using cached data from {signal.data_date.isoformat()}")
+        return True
+    if lag == 1:
+        warnings.append(
+            f"{signal.name}: cached data is one China trading day stale; observation only"
+        )
+        return False
+
+    warnings.append(
+        f"{signal.name}: cached data is {lag} China trading days stale; strategy skipped"
+    )
+    return False
+
+
+def _selected_asset_groups(config: AppConfig, mode: str):
+    groups = config.assets["asset_groups"].items()
+    if mode != "us_weekly":
+        return list(groups)
+    selected = set(config.calendars.get("us_weekly", {}).get("asset_groups", []))
+    return [(key, value) for key, value in groups if key in selected]
+
+
+def _history_asset_groups(config: AppConfig, mode: str):
+    groups = dict(config.assets["asset_groups"])
+    if mode != "us_weekly":
+        return list(groups.items())
+
+    selected = set(config.calendars.get("us_weekly", {}).get("asset_groups", []))
+    required = set(selected)
+    for key in selected:
+        asset_config = groups.get(key, {})
+        if asset_config.get("provider") != "proxy":
+            continue
+        required.update(
+            dependency
+            for dependency, weight in asset_config.get("proxy_weights", {}).items()
+            if dependency != "cash" and float(weight) > 0
+        )
+    return [(key, groups[key]) for key in groups if key in required]
+
+
+def _should_run_us_weekly(today: date, calendars: dict) -> bool:
+    us_weekly = calendars.get("us_weekly", {})
+    if today.isoformat() in us_weekly.get("manual_run_dates", []):
+        return True
+    return today.weekday() == int(us_weekly.get("weekday", 5))
+
+
+def _mark_dry_run_allocations(allocations: list[FundAllocation]) -> list[FundAllocation]:
+    return [
+        replace(
+            allocation,
+            executed_amount=None,
+            status=f"dry_run:{allocation.status}",
+            reason=f"{allocation.reason}; dry run only, not recorded",
+        )
+        for allocation in allocations
+    ]
+
+
+def _send_feishu_direct(message: str) -> str:
+    import os
+
+    webhook_url = os.getenv("FEISHU_WEBHOOK_URL")
+    if not webhook_url:
+        raise RuntimeError("Missing FEISHU_WEBHOOK_URL in environment or .env")
+    webhook_secret = os.getenv("FEISHU_WEBHOOK_SECRET") or None
+    response = send_text(webhook_url, "【DRY RUN】\n" + message, webhook_secret)
+    response.raise_for_status()
+    return "Sent Feishu dry-run notification.\n\n" + message
 
 
 def _proxy_history(asset_group: str, asset_config: dict, histories: dict[str, list[PriceBar]]) -> list[PriceBar]:
