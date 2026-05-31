@@ -68,3 +68,32 @@ FEISHU_WEBHOOK_SECRET=your_signing_secret
 python -m pytest
 python -m compileall .\src\fund_signal
 ```
+
+## Ubuntu 部署
+
+首次部署：
+
+```bash
+REPO_URL=https://github.com/you/fund-signal.git PROJECT_DIR=$HOME/fund-signal bash deploy/deploy_ubuntu.sh
+```
+
+后续更新：
+
+```bash
+PROJECT_DIR=$HOME/fund-signal bash deploy/update_ubuntu.sh
+```
+
+脚本会：
+
+- 创建或复用项目目录
+- 创建 `.venv`
+- 安装依赖
+- 初始化 `data/cache` 和 `logs`
+- 从 `.env.example` 创建 `.env`，但不会覆盖已有 `.env`
+- 运行 `check`、`pytest` 和一次 `afternoon --dry-run`
+
+定时任务示例：
+
+```text
+deploy/crontab.example
+```

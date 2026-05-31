@@ -1,0 +1,12 @@
+# Edit PROJECT_DIR if your deployment path differs.
+SHELL=/bin/bash
+PROJECT_DIR=/home/ubuntu/fund-signal
+
+# Noon observation, China trading days are checked by the app.
+00 12 * * 1-5 cd $PROJECT_DIR && source .venv/bin/activate && python -m fund_signal.cli run --mode noon --send >> logs/cron.log 2>&1
+
+# Afternoon execution suggestion, China trading days are checked by the app.
+30 14 * * 1-5 cd $PROJECT_DIR && source .venv/bin/activate && python -m fund_signal.cli run --mode afternoon --send >> logs/cron.log 2>&1
+
+# Optional US weekly observation.
+00 09 * * 6 cd $PROJECT_DIR && source .venv/bin/activate && python -m fund_signal.cli run --mode us_weekly --send >> logs/cron.log 2>&1
