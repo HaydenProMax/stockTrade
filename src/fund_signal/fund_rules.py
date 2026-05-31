@@ -54,15 +54,25 @@ def apply_purchase_rules(allocations: list[FundAllocation]) -> list[FundAllocati
                 )
             )
         elif "限" in purchase_status or daily_limit_value is not None:
+            limit_amount = daily_limit_value if daily_limit_value is not None else allocation.amount
+            capped_amount = min(allocation.amount, limit_amount)
+            capped_units = allocation.units * capped_amount / allocation.amount if allocation.amount else 0
+            deferred_amount = allocation.amount - capped_amount
+            limit_reason = (
+                f"{allocation.reason}; purchase status: {purchase_status or 'unknown'}; "
+                f"daily_limit={daily_limit_value if daily_limit_value is not None else 'unknown'}"
+            )
+            if deferred_amount > 0:
+                limit_reason = f"{limit_reason}; deferred_by_purchase_limit={deferred_amount:g}"
             checked.append(
                 replace(
                     allocation,
                     fund_name=fund_name or allocation.fund_name,
+                    units=capped_units,
+                    amount=capped_amount,
+                    executed_amount=capped_amount if allocation.executed_amount is not None else None,
                     status=_status_with_purchase(allocation.status, "purchase_limited"),
-                    reason=(
-                        f"{allocation.reason}; purchase status: {purchase_status or 'unknown'}; "
-                        f"daily_limit={daily_limit_value if daily_limit_value is not None else 'unknown'}"
-                    ),
+                    reason=limit_reason,
                 )
             )
         else:

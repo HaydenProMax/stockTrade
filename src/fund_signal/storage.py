@@ -202,7 +202,7 @@ class Storage:
                 SELECT asset_group, fund_code, COALESCE(executed_amount, amount, 0)
                 FROM allocations
                 WHERE run_date LIKE ?
-                  AND status = 'assumed_executed'
+                  AND status LIKE 'assumed_executed%'
                 """,
                 (f"{month_prefix}-%",),
             ).fetchall()

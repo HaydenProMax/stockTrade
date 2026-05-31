@@ -192,6 +192,45 @@ def test_us_weekly_mode_is_observation_only():
     assert "us_weekly" in allocations[0].reason
 
 
+def test_fixed_monthly_skips_after_fund_spent_this_month():
+    config = {
+        "name": "红利低波50",
+        "funds": [
+            {
+                "code": "008163",
+                "name": "红利低波",
+                "enabled": True,
+                "plans": [
+                    {
+                        "type": "fixed_monthly",
+                        "amount": 1000,
+                        "monthly_budget_amount": 1000,
+                    }
+                ],
+            }
+        ],
+    }
+    signal = _signal("dividend_low_vol_50", final_units=0)
+    state = AllocationState(
+        portfolio_remaining=5500,
+        asset_spent={},
+        fund_spent={"008163": 1000},
+    )
+
+    allocations = allocate_to_funds(
+        "dividend_low_vol_50",
+        config,
+        signal,
+        {},
+        state,
+        mode="afternoon",
+        today=date(2026, 5, 29),
+        calendars={},
+    )
+
+    assert allocations == []
+
+
 def _signal(asset_group: str, final_units: float, daily_change: float = 0.0) -> AssetSignal:
     return AssetSignal(
         asset_group=asset_group,

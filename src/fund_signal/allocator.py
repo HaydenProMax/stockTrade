@@ -93,6 +93,16 @@ def _fixed_allocation(
 ) -> FundAllocation:
     requested = float(plan["amount"])
     monthly_budget = float(plan.get("monthly_budget_amount", requested))
+    if status == "fixed_monthly" and state.fund_spent.get(fund["code"], 0.0) > 0:
+        return _allocation(
+            asset_group,
+            fund["code"],
+            fund["name"],
+            0,
+            0,
+            "skipped",
+            "fixed_monthly; already executed this month",
+        )
     fund_remaining = max(0.0, monthly_budget - state.fund_spent.get(fund["code"], 0.0))
     amount = _consume(state, asset_group, fund["code"], min(requested, fund_remaining))
     return _allocation(

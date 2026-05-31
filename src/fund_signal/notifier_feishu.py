@@ -243,6 +243,12 @@ def _friendly_warnings(warnings: list[str]) -> list[str]:
             result.append("今天不是中国交易日，本次只做演练观察")
         elif warning.startswith("US WEEKLY:"):
             result.append("美股周报只观察，不执行，不占用预算")
+        elif warning.startswith("TECH_GROWTH_WARNING:"):
+            result.append("科技成长投入已达到或超过警戒线")
+        elif warning.startswith("TECH_GROWTH_OBSERVE:"):
+            result.append("科技成长投入已达到观察线")
+        elif warning.startswith("PORTFOLIO_LIMIT:"):
+            result.append("组合月度投入已达到或超过硬上限")
         elif "cached data" in warning:
             result.append("部分数据来自缓存，请留意时效")
         else:

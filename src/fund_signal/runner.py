@@ -125,6 +125,13 @@ def run(config: AppConfig, mode: str, send: bool = False, dry_run: bool = False)
                 warnings.append(f"{asset_config['name']}: {exc}")
 
         allocations = apply_purchase_rules(allocations)
+        _add_budget_warnings(
+            config.budget,
+            monthly_total,
+            monthly_asset_spent,
+            allocations,
+            warnings,
+        )
         if dry_run:
             warnings.insert(0, "DRY RUN: no run, signal, allocation, or execution records were saved.")
             if mode == "us_weekly":
@@ -208,6 +215,39 @@ def _should_run_us_weekly(today: date, calendars: dict) -> bool:
     if today.isoformat() in us_weekly.get("manual_run_dates", []):
         return True
     return today.weekday() == int(us_weekly.get("weekday", 5))
+
+
+def _add_budget_warnings(
+    budget_config: dict,
+    monthly_total: float,
+    monthly_asset_spent: dict[str, float],
+    allocations: list[FundAllocation],
+    warnings: list[str],
+) -> None:
+    tech_config = budget_config.get("tech_growth", {})
+    tech_groups = set(tech_config.get("asset_groups", []))
+    if not tech_groups:
+        return
+
+    current_by_asset: dict[str, float] = {}
+    for allocation in allocations:
+        amount = allocation.executed_amount if allocation.executed_amount is not None else allocation.amount
+        current_by_asset[allocation.asset_group] = current_by_asset.get(allocation.asset_group, 0.0) + float(amount or 0)
+
+    tech_total = sum(monthly_asset_spent.get(group, 0.0) for group in tech_groups)
+    tech_total += sum(current_by_asset.get(group, 0.0) for group in tech_groups)
+    portfolio_total = monthly_total + sum(current_by_asset.values())
+
+    warning_amount = tech_config.get("monthly_warning_amount")
+    observe_amount = tech_config.get("monthly_observe_amount")
+    if warning_amount is not None and tech_total >= float(warning_amount):
+        warnings.append(f"TECH_GROWTH_WARNING: monthly tech growth amount {tech_total:g} >= {float(warning_amount):g}")
+    elif observe_amount is not None and tech_total >= float(observe_amount):
+        warnings.append(f"TECH_GROWTH_OBSERVE: monthly tech growth amount {tech_total:g} >= {float(observe_amount):g}")
+
+    hard_limit = budget_config.get("portfolio_monthly_hard_limit_amount")
+    if hard_limit is not None and portfolio_total >= float(hard_limit):
+        warnings.append(f"PORTFOLIO_LIMIT: monthly portfolio amount {portfolio_total:g} >= {float(hard_limit):g}")
 
 
 def _mark_dry_run_allocations(allocations: list[FundAllocation]) -> list[FundAllocation]:
