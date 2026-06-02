@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PROJECT_DIR="${PROJECT_DIR:-$HOME/fund-signal}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DEFAULT_PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_DIR="${PROJECT_DIR:-$DEFAULT_PROJECT_DIR}"
 REPO_URL="${REPO_URL:-}"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 
