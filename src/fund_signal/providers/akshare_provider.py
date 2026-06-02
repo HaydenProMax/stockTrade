@@ -75,6 +75,17 @@ def _history_candidates(ak: Any, symbol: str, start_text: str, end_text: str) ->
         )
         return candidates
 
+    global_index_symbol = _global_index_name(symbol)
+    if global_index_symbol:
+        candidates.append(
+            ("index_global_hist_sina", lambda: ak.index_global_hist_sina(symbol=global_index_symbol))
+        )
+        return candidates
+
+    if _looks_like_us_symbol(symbol):
+        candidates.append(("stock_us_daily", lambda: ak.stock_us_daily(symbol=symbol, adjust="")))
+        return candidates
+
     if _looks_like_etf(symbol):
         candidates.append(
             (
@@ -203,4 +214,16 @@ def _looks_like_etf(symbol: str) -> bool:
 
 
 def _looks_like_hk_index(symbol: str) -> bool:
-    return symbol.isalpha()
+    return symbol in {"HSTECH"}
+
+
+def _looks_like_us_symbol(symbol: str) -> bool:
+    return symbol.replace(".", "").isalpha()
+
+
+def _global_index_name(symbol: str) -> str | None:
+    aliases = {
+        "NIKKEI225": "日经225指数",
+        "^N225": "日经225指数",
+    }
+    return aliases.get(symbol)

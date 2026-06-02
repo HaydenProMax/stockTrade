@@ -6,6 +6,7 @@ from pathlib import Path
 from fund_signal.providers.akshare_provider import AkshareProvider
 from fund_signal.providers.alphavantage_provider import AlphaVantageProvider
 from fund_signal.providers.csv_provider import CsvProvider
+from fund_signal.providers.stooq_provider import StooqProvider
 from fund_signal.providers.yfinance_provider import YFinanceProvider
 from fund_signal.types import PriceBar
 
@@ -17,6 +18,7 @@ class MarketData:
             "yfinance": YFinanceProvider(cache_dir),
             "akshare": AkshareProvider(),
             "csv": CsvProvider(cache_dir),
+            "stooq": StooqProvider(),
         }
 
     def history(

@@ -5,7 +5,7 @@ asset_groups:
     market: us
     index_symbol: "QQQ"
     provider: yfinance
-    provider_fallback: [alphavantage, csv]
+    provider_fallback: [akshare, stooq, alphavantage, csv]
     tech_growth: true
     qdii: true
     strategy_plan:
@@ -47,7 +47,7 @@ asset_groups:
     market: us
     index_symbol: "SPY"
     provider: yfinance
-    provider_fallback: [alphavantage, csv]
+    provider_fallback: [akshare, stooq, alphavantage, csv]
     tech_growth: false
     qdii: true
     funds:
@@ -59,8 +59,8 @@ asset_groups:
     name: 日经225
     volatility_class: medium
     market: japan
-    index_symbol: "1321.T"
-    provider: yfinance
+    index_symbol: "NIKKEI225"
+    provider: akshare
     provider_fallback: [csv]
     tech_growth: false
     qdii: true
