@@ -9,35 +9,40 @@ asset_groups:
     tech_growth: true
     qdii: true
     strategy_plan:
-      monthly_budget_amount: 400
+      monthly_budget_amount: 1260
       unit_amount: 100
       month_end_fill: true
       fill_last_trading_days: 5
     funds:
       - code: "040046"
         name: 华安纳斯达克100A
-        enabled: true
+        enabled: false
+        archived_reason: not_in_long_term_holdings_2026_06_13
         plans:
           - type: fixed_daily
             amount: 10
             monthly_budget_amount: 260
       - code: "014978"
         name: 华安纳斯达克100C
-        enabled: true
+        enabled: false
+        archived_reason: not_in_long_term_holdings_2026_06_13
         plans:
           - type: fixed_daily
             amount: 10
             monthly_budget_amount: 260
       - code: "270042"
-        name: 广发纳斯达克100A
+        name: 广发纳指100ETF联接(QDII)人民币A
         enabled: true
+        strategy_enabled: true
+        strategy_priority: 1
         plans:
           - type: fixed_daily
             amount: 10
             monthly_budget_amount: 260
       - code: "021778"
         name: 广发纳斯达克100F
-        enabled: true
+        enabled: false
+        archived_reason: not_in_long_term_holdings_2026_06_13
         strategy_enabled: true
         strategy_priority: 1
 
@@ -53,7 +58,8 @@ asset_groups:
     funds:
       - code: "017641"
         name: 摩根标普500
-        enabled: true
+        enabled: false
+        archived_reason: not_in_long_term_holdings_2026_06_13
 
   nikkei225:
     name: 日经225
@@ -66,7 +72,7 @@ asset_groups:
     qdii: true
     funds:
       - code: "020712"
-        name: 日经225基金020712
+        name: 华安三菱日联日经225ETF发起式联接A
         enabled: true
         plans:
           - type: fixed_daily
@@ -74,7 +80,8 @@ asset_groups:
             monthly_budget_amount: 260
       - code: "020713"
         name: 日经225基金020713
-        enabled: true
+        enabled: false
+        archived_reason: not_in_long_term_holdings_2026_06_13
         plans:
           - type: fixed_daily
             amount: 10
@@ -94,7 +101,7 @@ asset_groups:
       unit_amount: 100
     funds:
       - code: "012348"
-        name: 恒生科技基金
+        name: 天弘恒生科技ETF联接A
         enabled: true
         strategy_enabled: true
         strategy_priority: 1
@@ -112,7 +119,8 @@ asset_groups:
     funds:
       - code: "004789"
         name: 沪深300指数增强
-        enabled: true
+        enabled: false
+        archived_reason: not_in_long_term_holdings_2026_06_13
 
   csi_a500:
     name: 中证A500
@@ -128,7 +136,7 @@ asset_groups:
       unit_amount: 100
     funds:
       - code: "022459"
-        name: 中证A500基金
+        name: 易方达中证A500ETF联接A
         enabled: true
         strategy_enabled: true
         strategy_priority: 1
@@ -148,7 +156,7 @@ asset_groups:
       unit_amount: 250
     funds:
       - code: "008163"
-        name: 红利低波50基金
+        name: 南方标普红利低波50ETF联接A
         enabled: true
         strategy_enabled: true
         strategy_priority: 1
@@ -170,11 +178,11 @@ asset_groups:
       hstech: 0.3
       cash: 0.2
     strategy_plan:
-      monthly_budget_amount: 1000
+      monthly_budget_amount: 500
       unit_amount: 100
     funds:
       - code: "006373"
-        name: 国富全球科技互联混合A
+        name: 国富全球科技互联混合(QDII)人民币A
         enabled: true
         strategy_enabled: true
         strategy_priority: 1
@@ -182,7 +190,8 @@ asset_groups:
         daily_limit_amount: 100
       - code: "021842"
         name: 国富全球科技互联混合C
-        enabled: true
+        enabled: false
+        archived_reason: not_in_long_term_holdings_2026_06_13
         strategy_enabled: true
         strategy_priority: 2
         daily_limit_amount: 100

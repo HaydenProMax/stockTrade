@@ -51,6 +51,40 @@ def test_global_tech_prefers_a_class_and_defers_over_daily_limits():
     assert allocations[2].reason.endswith("deferred_amount=100")
 
 
+def test_global_tech_monthly_budget_caps_at_500_after_policy_change():
+    config = {
+        "name": "全球科技互联",
+        "strategy_plan": {"monthly_budget_amount": 500, "unit_amount": 100},
+        "funds": [
+            {
+                "code": "006373",
+                "name": "A",
+                "enabled": True,
+                "strategy_enabled": True,
+                "strategy_priority": 1,
+                "daily_limit_amount": 1000,
+            }
+        ],
+    }
+    signal = _signal("global_tech", final_units=8)
+    state = AllocationState(portfolio_remaining=5500, asset_spent={}, fund_spent={})
+
+    allocations = allocate_to_funds(
+        "global_tech",
+        config,
+        signal,
+        {},
+        state,
+        mode="afternoon",
+        today=date(2026, 5, 29),
+        calendars={},
+    )
+
+    assert allocations[0].fund_code == "006373"
+    assert allocations[0].amount == 500
+    assert len(allocations) == 1
+
+
 def test_portfolio_hard_limit_caps_strategy_amount():
     config = {
         "name": "恒生科技",
@@ -121,6 +155,56 @@ def test_nasdaq_month_end_fill_buys_remaining_on_negative_day():
 
     assert allocations[0].fund_code == "021778"
     assert allocations[0].amount == 400
+    assert "month_end_fill" in allocations[0].reason
+
+
+def test_nasdaq_fixed_daily_plus_1000_smart_monthly_budget():
+    config = {
+        "name": "纳指100",
+        "strategy_plan": {
+            "monthly_budget_amount": 1260,
+            "unit_amount": 100,
+            "month_end_fill": True,
+            "fill_last_trading_days": 5,
+        },
+        "funds": [
+            {
+                "code": "270042",
+                "name": "广发纳指100ETF联接(QDII)人民币A",
+                "enabled": True,
+                "strategy_enabled": True,
+                "strategy_priority": 1,
+                "plans": [
+                    {
+                        "type": "fixed_daily",
+                        "amount": 10,
+                        "monthly_budget_amount": 260,
+                    }
+                ],
+            }
+        ],
+    }
+    signal = _signal("nasdaq100", final_units=0, daily_change=-0.01)
+    state = AllocationState(
+        portfolio_remaining=5500,
+        asset_spent={"nasdaq100": 260},
+        fund_spent={"270042": 260},
+    )
+
+    allocations = allocate_to_funds(
+        "nasdaq100",
+        config,
+        signal,
+        {},
+        state,
+        mode="afternoon",
+        today=date(2026, 5, 29),
+        calendars={},
+    )
+
+    assert [(item.fund_code, item.amount, item.status) for item in allocations] == [
+        ("270042", 1000, "assumed_executed")
+    ]
     assert "month_end_fill" in allocations[0].reason
 
 
